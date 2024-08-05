@@ -13,242 +13,222 @@ public class TestService {
     private final TestRepository testRepository;
 
     @Transactional
-    public void outerTransactionalMethod(boolean outerThrow, boolean outerChecked, boolean innerTransactional, boolean innerThrow, boolean innerChecked) throws IOException {
-        if (outerThrow) {
-            if (outerChecked) {
-                // outer 에서 체크예외 발생 후 밖으로 던지는 경우
-                Test outerEntity = new Test();
-                outerEntity.setCode("OUTER_TX_THROW_CHECK");
-                outerEntity.setEtc("OUTER_TX_THROW_CHECK");
-                testRepository.save(outerEntity);
+    public void outerThrowChecked(boolean innerTransactional) throws IOException {
+        Test outerEntity = new Test();
+        outerEntity.setCode("OUTER_TX_THROW_CHECK");
+        outerEntity.setEtc("OUTER_TX_THROW_CHECK");
+        testRepository.save(outerEntity);
 
-                if (innerTransactional) {
-                    innerTransactionalMethod(innerThrow, innerChecked);
-                } else {
-                    innerNonTransactionalMethod(innerThrow, innerChecked);
-                }
-
-                throw new IOException("Outer Transactional failed with IOException");
-            } else {
-                // outer 에서 언체크예외 발생 후 밖으로 던지는 경우
-                Test outerEntity = new Test();
-                outerEntity.setCode("OUTER_TX_THROW_UNCHECK");
-                outerEntity.setEtc("OUTER_TX_THROW_UNCHECK");
-                testRepository.save(outerEntity);
-
-                if (innerTransactional) {
-                    innerTransactionalMethod(innerThrow, innerChecked);
-                } else {
-                    innerNonTransactionalMethod(innerThrow, innerChecked);
-                }
-
-                throw new RuntimeException("Outer Transactional failed with RuntimeException");
-            }
+        if (innerTransactional) {
+            innerTxThrowChecked();
         } else {
-            if (outerChecked) {
-                try {
-                    // outer 에서 체크예외 발생 후 잡는 경우
-                    Test outerEntity = new Test();
-                    outerEntity.setCode("OUTER_NON_TX_CATCH_CHECK");
-                    outerEntity.setEtc("OUTER_NON_TX_CATCH_CHECK");
-                    testRepository.save(outerEntity);
-
-                    if (innerTransactional) {
-                        innerTransactionalMethod(innerThrow, innerChecked);
-                    } else {
-                        innerNonTransactionalMethod(innerThrow, innerChecked);
-                    }
-                    throw new IOException("Outer Transactional failed with IOException");
-                } catch (IOException | RuntimeException e) {
-                    handleException(e, innerThrow);
-                }
-            } else {
-                try {
-                    // outer 에서 언체크예외 발생 후 잡는 경우
-                    Test outerEntity = new Test();
-                    outerEntity.setCode("OUTER_NON_TX_CATCH_UNCHECK");
-                    outerEntity.setEtc("OUTER_NON_TX_CATCH_UNCHECK");
-                    testRepository.save(outerEntity);
-
-                    if (innerTransactional) {
-                        innerTransactionalMethod(innerThrow, innerChecked);
-                    } else {
-                        innerNonTransactionalMethod(innerThrow, innerChecked);
-                    }
-                    throw new RuntimeException("Outer Transactional failed with RuntimeException");
-                } catch (IOException | RuntimeException e) {
-                    handleException(e, innerThrow);
-                }
-            }
+            innerNonTxThrowChecked();
         }
+
+        throw new IOException("Outer Transactional failed with IOException");
     }
 
-    public void outerNonTransactionalMethod(boolean outerThrow, boolean outerChecked, boolean innerTransactional, boolean innerThrow, boolean innerChecked) throws IOException {
-        if (outerThrow) {
-            if (outerChecked) {
-                // outer 에서 체크예외 발생 후 밖으로 던지는 경우
-                Test outerEntity = new Test();
-                outerEntity.setCode("OUTER_NON_TX_THROW_CHECK");
-                outerEntity.setEtc("OUTER_NON_TX_THROW_CHECK");
-                testRepository.save(outerEntity);
+    @Transactional
+    public void outerThrowUnchecked(boolean innerTransactional) {
+        Test outerEntity = new Test();
+        outerEntity.setCode("OUTER_TX_THROW_UNCHECK");
+        outerEntity.setEtc("OUTER_TX_THROW_UNCHECK");
+        testRepository.save(outerEntity);
 
-                if (innerTransactional) {
-                    innerTransactionalMethod(innerThrow, innerChecked);
-                } else {
-                    innerNonTransactionalMethod(innerThrow, innerChecked);
-                }
-
-                throw new IOException("Outer Transactional failed with IOException");
-            } else {
-                // outer 에서 언체크예외 발생 후 밖으로 던지는 경우
-                Test outerEntity = new Test();
-                outerEntity.setCode("OUTER_NON_TX_THROW_UNCHECK");
-                outerEntity.setEtc("OUTER_NON_TX_THROW_UNCHECK");
-                testRepository.save(outerEntity);
-
-                if (innerTransactional) {
-                    innerTransactionalMethod(innerThrow, innerChecked);
-                } else {
-                    innerNonTransactionalMethod(innerThrow, innerChecked);
-                }
-
-                throw new RuntimeException("Outer Transactional failed with RuntimeException");
-            }
+        if (innerTransactional) {
+            innerTxThrowUnchecked();
         } else {
-            if (outerChecked) {
-                try {
-                    // outer 에서 체크예외 발생 후 잡는 경우
-                    Test outerEntity = new Test();
-                    outerEntity.setCode("OUTER_NON_TX_CATCH_CHECK");
-                    outerEntity.setEtc("OUTER_NON_TX_CATCH_CHECK");
-                    testRepository.save(outerEntity);
+            innerNonTxThrowUnchecked();
+        }
 
-                    if (innerTransactional) {
-                        innerTransactionalMethod(innerThrow, innerChecked);
-                    } else {
-                        innerNonTransactionalMethod(innerThrow, innerChecked);
-                    }
-                    throw new IOException("Outer Transactional failed with IOException");
-                } catch (IOException | RuntimeException e) {
-                    handleException(e, innerThrow);
-                }
+        throw new RuntimeException("Outer Transactional failed with RuntimeException");
+    }
+
+    @Transactional
+    public void outerCatchChecked(boolean innerTransactional) {
+        try {
+            Test outerEntity = new Test();
+            outerEntity.setCode("OUTER_NON_TX_CATCH_CHECK");
+            outerEntity.setEtc("OUTER_NON_TX_CATCH_CHECK");
+            testRepository.save(outerEntity);
+
+            if (innerTransactional) {
+                innerTxCatchChecked();
             } else {
-                try {
-                    // outer 에서 언체크예외 발생 후 잡는 경우
-                    Test outerEntity = new Test();
-                    outerEntity.setCode("OUTER_NON_TX_CATCH_UNCHECK");
-                    outerEntity.setEtc("OUTER_NON_TX_CATCH_UNCHECK");
-                    testRepository.save(outerEntity);
-
-                    if (innerTransactional) {
-                        innerTransactionalMethod(innerThrow, innerChecked);
-                    } else {
-                        innerNonTransactionalMethod(innerThrow, innerChecked);
-                    }
-                    throw new RuntimeException("Outer Transactional failed with RuntimeException");
-                } catch (IOException | RuntimeException e) {
-                    handleException(e, innerThrow);
-                }
+                innerNonTxCatchChecked();
             }
+            throw new IOException("Outer Transactional failed with IOException");
+        } catch (IOException | RuntimeException e) {
+            //
         }
     }
 
     @Transactional
-    public void innerTransactionalMethod(boolean innerThrow, boolean innerChecked) throws IOException {
-        if (innerThrow) {
-            if (innerChecked) {
-                // inner 에서 체크예외 발생 후 밖으로 던지는 경우
-                Test innerEntity = new Test();
-                innerEntity.setCode("INNER_TX_THROW_CHECK");
-                innerEntity.setEtc("INNER_TX_THROW_CHECK");
-                testRepository.save(innerEntity);
-                throw new IOException("Checked Exception in Inner Transactional Method");
+    public void outerCatchUnchecked(boolean innerTransactional) {
+        try {
+            Test outerEntity = new Test();
+            outerEntity.setCode("OUTER_NON_TX_CATCH_UNCHECK");
+            outerEntity.setEtc("OUTER_NON_TX_CATCH_UNCHECK");
+            testRepository.save(outerEntity);
+
+            if (innerTransactional) {
+                innerTxCatchUnchecked();
             } else {
-                // inner 에서 언체크예외 발생 후 밖으로 던지는 경우
-                Test innerEntity = new Test();
-                innerEntity.setCode("INNER_TX_THROW_UNCHECK");
-                innerEntity.setEtc("INNER_TX_THROW_UNCHECK");
-                testRepository.save(innerEntity);
-                throw new RuntimeException("Unchecked Exception in Inner Transactional Method");
+                innerNonTxCatchUnchecked();
             }
-        } else {
-            if (innerChecked) {
-                try {
-                    // inner 에서 체크예외 발생 후 잡는 경우
-                    Test innerEntity = new Test();
-                    innerEntity.setCode("INNER_TX_CATCH_CHECK");
-                    innerEntity.setEtc("INNER_TX_CATCH_CHECK");
-                    testRepository.save(innerEntity);
-                    throw new IOException("Checked Exception in Inner Transactional Method");
-                } catch (IOException e) {
-                    handleException(e, innerThrow);
-                }
-            } else {
-                try {
-                    // inner 에서 언체크예외 발생 후 잡는 경우
-                    Test innerEntity = new Test();
-                    innerEntity.setCode("INNER_TX_CATCH_UNCHECK");
-                    innerEntity.setEtc("INNER_TX_CATCH_UNCHECK");
-                    testRepository.save(innerEntity);
-                    throw new RuntimeException("Unchecked Exception in Inner Transactional Method");
-                } catch (RuntimeException e) {
-                    handleException(e, innerThrow);
-                }
-            }
+            throw new RuntimeException("Outer Transactional failed with RuntimeException");
+        } catch (RuntimeException e) {
+            //
         }
     }
 
-    public void innerNonTransactionalMethod(boolean innerThrow, boolean innerChecked) throws IOException {
-        if (innerThrow) {
-            if (innerChecked) {
-                // inner 에서 체크예외 발생 후 밖으로 던지는 경우
-                Test innerEntity = new Test();
-                innerEntity.setCode("INNER_NON_TX_THROW_CHECK");
-                innerEntity.setEtc("INNER_NON_TX_THROW_CHECK");
-                testRepository.save(innerEntity);
-                throw new IOException("Checked Exception in Inner Transactional Method");
-            } else {
-                // inner 에서 언체크예외 발생 후 밖으로 던지는 경우
-                Test innerEntity = new Test();
-                innerEntity.setCode("INNER_NON_TX_THROW_UNCHECK");
-                innerEntity.setEtc("INNER_NON_TX_THROW_UNCHECK");
-                testRepository.save(innerEntity);
-                throw new RuntimeException("Unchecked Exception in Inner Transactional Method");
-            }
+    public void outerNonTxThrowChecked(boolean innerTransactional) throws IOException {
+        Test outerEntity = new Test();
+        outerEntity.setCode("OUTER_NON_TX_THROW_CHECK");
+        outerEntity.setEtc("OUTER_NON_TX_THROW_CHECK");
+        testRepository.save(outerEntity);
+
+        if (innerTransactional) {
+            innerTxThrowChecked();
         } else {
-            if (innerChecked) {
-                try {
-                    // inner 에서 체크예외 발생 후 잡는 경우
-                    Test innerEntity = new Test();
-                    innerEntity.setCode("INNER_NON_TX_CATCH_CHECK");
-                    innerEntity.setEtc("INNER_NON_TX_CATCH_CHECK");
-                    testRepository.save(innerEntity);
-                    throw new IOException("Checked Exception in Inner Transactional Method");
-                } catch (IOException e) {
-                    handleException(e, innerThrow);
-                }
+            innerNonTxThrowChecked();
+        }
+
+        throw new IOException("Outer Non-Transactional failed with IOException");
+    }
+
+    public void outerNonTxThrowUnchecked(boolean innerTransactional) {
+        Test outerEntity = new Test();
+        outerEntity.setCode("OUTER_NON_TX_THROW_UNCHECK");
+        outerEntity.setEtc("OUTER_NON_TX_THROW_UNCHECK");
+        testRepository.save(outerEntity);
+
+        if (innerTransactional) {
+            innerTxThrowUnchecked();
+        } else {
+            innerNonTxThrowUnchecked();
+        }
+
+        throw new RuntimeException("Outer Non-Transactional failed with RuntimeException");
+    }
+
+    public void outerNonTxCatchChecked(boolean innerTransactional) {
+        try {
+            Test outerEntity = new Test();
+            outerEntity.setCode("OUTER_NON_TX_CATCH_CHECK");
+            outerEntity.setEtc("OUTER_NON_TX_CATCH_CHECK");
+            testRepository.save(outerEntity);
+
+            if (innerTransactional) {
+                innerTxCatchChecked();
             } else {
-                try {
-                    // inner 에서 언체크예외 발생 후 잡는 경우
-                    Test innerEntity = new Test();
-                    innerEntity.setCode("INNER_NON_TX_CATCH_UNCHECK");
-                    innerEntity.setEtc("INNER_NON_TX_CATCH_UNCHECK");
-                    testRepository.save(innerEntity);
-                    throw new RuntimeException("Unchecked Exception in Inner Transactional Method");
-                } catch (RuntimeException e) {
-                    handleException(e, innerThrow);
-                }
+                innerNonTxCatchChecked();
             }
+            throw new IOException("Outer Non-Transactional failed with IOException");
+        } catch (IOException | RuntimeException e) {
+            //
         }
     }
 
-    private void handleException(Exception e, boolean throwError) throws IOException, RuntimeException {
-        if (throwError) {
-            if (e instanceof IOException) {
-                throw (IOException) e;
-            } else if (e instanceof RuntimeException) {
-                throw (RuntimeException) e;
+    public void outerNonTxCatchUnchecked(boolean innerTransactional) {
+        try {
+            Test outerEntity = new Test();
+            outerEntity.setCode("OUTER_NON_TX_CATCH_UNCHECK");
+            outerEntity.setEtc("OUTER_NON_TX_CATCH_UNCHECK");
+            testRepository.save(outerEntity);
+
+            if (innerTransactional) {
+                innerTxCatchUnchecked();
+            } else {
+                innerNonTxCatchUnchecked();
             }
+            throw new RuntimeException("Outer Non-Transactional failed with RuntimeException");
+        } catch (RuntimeException e) {
+            //
+        }
+    }
+
+    @Transactional
+    public void innerTxThrowChecked() throws IOException {
+        Test innerEntity = new Test();
+        innerEntity.setCode("INNER_TX_THROW_CHECK");
+        innerEntity.setEtc("INNER_TX_THROW_CHECK");
+        testRepository.save(innerEntity);
+        throw new IOException("Checked Exception in Inner Transactional Method");
+    }
+
+    @Transactional
+    public void innerTxThrowUnchecked() {
+        Test innerEntity = new Test();
+        innerEntity.setCode("INNER_TX_THROW_UNCHECK");
+        innerEntity.setEtc("INNER_TX_THROW_UNCHECK");
+        testRepository.save(innerEntity);
+        throw new RuntimeException("Unchecked Exception in Inner Transactional Method");
+    }
+
+    @Transactional
+    public void innerTxCatchChecked() {
+        try {
+            Test innerEntity = new Test();
+            innerEntity.setCode("INNER_TX_CATCH_CHECK");
+            innerEntity.setEtc("INNER_TX_CATCH_CHECK");
+            testRepository.save(innerEntity);
+            throw new IOException("Checked Exception in Inner Transactional Method");
+        } catch (IOException e) {
+            //
+        }
+    }
+
+    @Transactional
+    public void innerTxCatchUnchecked() {
+        try {
+            Test innerEntity = new Test();
+            innerEntity.setCode("INNER_TX_CATCH_UNCHECK");
+            innerEntity.setEtc("INNER_TX_CATCH_UNCHECK");
+            testRepository.save(innerEntity);
+            throw new RuntimeException("Unchecked Exception in Inner Transactional Method");
+        } catch (RuntimeException e) {
+            //
+        }
+    }
+
+    public void innerNonTxThrowChecked() throws IOException {
+        Test innerEntity = new Test();
+        innerEntity.setCode("INNER_NON_TX_THROW_CHECK");
+        innerEntity.setEtc("INNER_NON_TX_THROW_CHECK");
+        testRepository.save(innerEntity);
+        throw new IOException("Checked Exception in Inner Non-Transactional Method");
+    }
+
+    public void innerNonTxThrowUnchecked() {
+        Test innerEntity = new Test();
+        innerEntity.setCode("INNER_NON_TX_THROW_UNCHECK");
+        innerEntity.setEtc("INNER_NON_TX_THROW_UNCHECK");
+        testRepository.save(innerEntity);
+        throw new RuntimeException("Unchecked Exception in Inner Non-Transactional Method");
+    }
+
+    public void innerNonTxCatchChecked() {
+        try {
+            Test innerEntity = new Test();
+            innerEntity.setCode("INNER_NON_TX_CATCH_CHECK");
+            innerEntity.setEtc("INNER_NON_TX_CATCH_CHECK");
+            testRepository.save(innerEntity);
+            throw new IOException("Checked Exception in Inner Non-Transactional Method");
+        } catch (IOException e) {
+            //
+        }
+    }
+
+    public void innerNonTxCatchUnchecked() {
+        try {
+            Test innerEntity = new Test();
+            innerEntity.setCode("INNER_NON_TX_CATCH_UNCHECK");
+            innerEntity.setEtc("INNER_NON_TX_CATCH_UNCHECK");
+            testRepository.save(innerEntity);
+            throw new RuntimeException("Unchecked Exception in Inner Non-Transactional Method");
+        } catch (RuntimeException e) {
+            //
         }
     }
 
