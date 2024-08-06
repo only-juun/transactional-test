@@ -3,5 +3,8 @@ package com.onlyjoon.test;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface TestRepository extends JpaRepository<Test, Long> {
+import java.util.Optional;
+
+public interface TestRepository extends JpaRepository<Code, Long> {
+    Optional<Code> findByCode(String code);
 }

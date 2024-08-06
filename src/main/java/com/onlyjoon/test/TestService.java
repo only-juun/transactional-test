@@ -14,7 +14,7 @@ public class TestService {
 
     @Transactional
     public void outerThrowChecked(boolean innerTransactional) throws IOException {
-        Test outerEntity = new Test();
+        Code outerEntity = new Code();
         outerEntity.setCode("OUTER_TX_THROW_CHECK");
         outerEntity.setEtc("OUTER_TX_THROW_CHECK");
         testRepository.save(outerEntity);
@@ -30,7 +30,7 @@ public class TestService {
 
     @Transactional
     public void outerThrowUnchecked(boolean innerTransactional) {
-        Test outerEntity = new Test();
+        Code outerEntity = new Code();
         outerEntity.setCode("OUTER_TX_THROW_UNCHECK");
         outerEntity.setEtc("OUTER_TX_THROW_UNCHECK");
         testRepository.save(outerEntity);
@@ -47,7 +47,7 @@ public class TestService {
     @Transactional
     public void outerCatchChecked(boolean innerTransactional) {
         try {
-            Test outerEntity = new Test();
+            Code outerEntity = new Code();
             outerEntity.setCode("OUTER_NON_TX_CATCH_CHECK");
             outerEntity.setEtc("OUTER_NON_TX_CATCH_CHECK");
             testRepository.save(outerEntity);
@@ -66,7 +66,7 @@ public class TestService {
     @Transactional
     public void outerCatchUnchecked(boolean innerTransactional) {
         try {
-            Test outerEntity = new Test();
+            Code outerEntity = new Code();
             outerEntity.setCode("OUTER_NON_TX_CATCH_UNCHECK");
             outerEntity.setEtc("OUTER_NON_TX_CATCH_UNCHECK");
             testRepository.save(outerEntity);
@@ -83,7 +83,7 @@ public class TestService {
     }
 
     public void outerNonTxThrowChecked(boolean innerTransactional) throws IOException {
-        Test outerEntity = new Test();
+        Code outerEntity = new Code();
         outerEntity.setCode("OUTER_NON_TX_THROW_CHECK");
         outerEntity.setEtc("OUTER_NON_TX_THROW_CHECK");
         testRepository.save(outerEntity);
@@ -98,7 +98,7 @@ public class TestService {
     }
 
     public void outerNonTxThrowUnchecked(boolean innerTransactional) {
-        Test outerEntity = new Test();
+        Code outerEntity = new Code();
         outerEntity.setCode("OUTER_NON_TX_THROW_UNCHECK");
         outerEntity.setEtc("OUTER_NON_TX_THROW_UNCHECK");
         testRepository.save(outerEntity);
@@ -114,7 +114,7 @@ public class TestService {
 
     public void outerNonTxCatchChecked(boolean innerTransactional) {
         try {
-            Test outerEntity = new Test();
+            Code outerEntity = new Code();
             outerEntity.setCode("OUTER_NON_TX_CATCH_CHECK");
             outerEntity.setEtc("OUTER_NON_TX_CATCH_CHECK");
             testRepository.save(outerEntity);
@@ -132,7 +132,7 @@ public class TestService {
 
     public void outerNonTxCatchUnchecked(boolean innerTransactional) {
         try {
-            Test outerEntity = new Test();
+            Code outerEntity = new Code();
             outerEntity.setCode("OUTER_NON_TX_CATCH_UNCHECK");
             outerEntity.setEtc("OUTER_NON_TX_CATCH_UNCHECK");
             testRepository.save(outerEntity);
@@ -150,7 +150,7 @@ public class TestService {
 
     @Transactional
     public void innerTxThrowChecked() throws IOException {
-        Test innerEntity = new Test();
+        Code innerEntity = new Code();
         innerEntity.setCode("INNER_TX_THROW_CHECK");
         innerEntity.setEtc("INNER_TX_THROW_CHECK");
         testRepository.save(innerEntity);
@@ -159,7 +159,7 @@ public class TestService {
 
     @Transactional
     public void innerTxThrowUnchecked() {
-        Test innerEntity = new Test();
+        Code innerEntity = new Code();
         innerEntity.setCode("INNER_TX_THROW_UNCHECK");
         innerEntity.setEtc("INNER_TX_THROW_UNCHECK");
         testRepository.save(innerEntity);
@@ -169,7 +169,7 @@ public class TestService {
     @Transactional
     public void innerTxCatchChecked() {
         try {
-            Test innerEntity = new Test();
+            Code innerEntity = new Code();
             innerEntity.setCode("INNER_TX_CATCH_CHECK");
             innerEntity.setEtc("INNER_TX_CATCH_CHECK");
             testRepository.save(innerEntity);
@@ -182,7 +182,7 @@ public class TestService {
     @Transactional
     public void innerTxCatchUnchecked() {
         try {
-            Test innerEntity = new Test();
+            Code innerEntity = new Code();
             innerEntity.setCode("INNER_TX_CATCH_UNCHECK");
             innerEntity.setEtc("INNER_TX_CATCH_UNCHECK");
             testRepository.save(innerEntity);
@@ -193,7 +193,7 @@ public class TestService {
     }
 
     public void innerNonTxThrowChecked() throws IOException {
-        Test innerEntity = new Test();
+        Code innerEntity = new Code();
         innerEntity.setCode("INNER_NON_TX_THROW_CHECK");
         innerEntity.setEtc("INNER_NON_TX_THROW_CHECK");
         testRepository.save(innerEntity);
@@ -201,7 +201,7 @@ public class TestService {
     }
 
     public void innerNonTxThrowUnchecked() {
-        Test innerEntity = new Test();
+        Code innerEntity = new Code();
         innerEntity.setCode("INNER_NON_TX_THROW_UNCHECK");
         innerEntity.setEtc("INNER_NON_TX_THROW_UNCHECK");
         testRepository.save(innerEntity);
@@ -210,7 +210,7 @@ public class TestService {
 
     public void innerNonTxCatchChecked() {
         try {
-            Test innerEntity = new Test();
+            Code innerEntity = new Code();
             innerEntity.setCode("INNER_NON_TX_CATCH_CHECK");
             innerEntity.setEtc("INNER_NON_TX_CATCH_CHECK");
             testRepository.save(innerEntity);
@@ -222,7 +222,7 @@ public class TestService {
 
     public void innerNonTxCatchUnchecked() {
         try {
-            Test innerEntity = new Test();
+            Code innerEntity = new Code();
             innerEntity.setCode("INNER_NON_TX_CATCH_UNCHECK");
             innerEntity.setEtc("INNER_NON_TX_CATCH_UNCHECK");
             testRepository.save(innerEntity);
