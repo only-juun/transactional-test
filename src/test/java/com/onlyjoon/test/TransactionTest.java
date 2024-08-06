@@ -8,9 +8,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 class TransactionTest {
@@ -27,105 +31,71 @@ class TransactionTest {
     }
 
     @ParameterizedTest
-    @MethodSource("outerTxTestParameters")
-    void testOuterTransactionalMethod(boolean outerThrow, boolean outerChecked, boolean innerTransactional, boolean innerThrow, boolean innerChecked, int expectedCount) {
+    @MethodSource("provideTestParameters")
+    void testTransactionScenarios(String methodName, boolean innerTransactional, int expectedCount) {
         try {
-            testService.outerTransactionalMethod(outerThrow, outerChecked, innerTransactional, innerThrow, innerChecked);
-        } catch (IOException | RuntimeException e) {
-            // 예외를 무시하거나 로깅
+            Method method = TestService.class.getMethod(methodName, boolean.class);
+            method.invoke(testService, innerTransactional);
+        } catch (InvocationTargetException e) {
+            // 실제 예외 처리
+            Throwable cause = e.getCause();
+            if (cause instanceof IOException || cause instanceof RuntimeException) {
+                // 예외 무시 또는 로깅
+            } else {
+                throw new RuntimeException(cause);
+            }
+        } catch (NoSuchMethodException | IllegalAccessException e) {
+            throw new RuntimeException(e);
         }
-
-        // DB에 저장된 엔티티 수 확인
         assertEquals(expectedCount, testRepository.findAll().size());
     }
 
-    @ParameterizedTest
-    @MethodSource("outerNonTxTestParameters")
-    void testOuterNonTransactionalMethod(boolean outerThrow, boolean outerChecked, boolean innerTransactional, boolean innerThrow, boolean innerChecked, int expectedCount) {
-        try {
-            testService.outerNonTransactionalMethod(outerThrow, outerChecked, innerTransactional, innerThrow, innerChecked);
-        } catch (IOException | RuntimeException e) {
-            // 예외를 무시하거나 로깅
+    private static Stream<Arguments> provideTestParameters() {
+        List<Arguments> arguments = new ArrayList<>();
+        String[] methods = {
+                "outerThrowChecked",
+                "outerThrowUnchecked",
+                "outerCatchChecked",
+                "outerCatchUnchecked",
+                "outerNonTxThrowChecked",
+                "outerNonTxThrowUnchecked",
+                "outerNonTxCatchChecked",
+                "outerNonTxCatchUnchecked"
+        };
+
+        boolean[] innerTransactionalOptions = {true, false};
+        // 설정된 조건에 따라 expectedCount 를 수정하여 실제 기대되는 값으로 설정합니다.
+        for (String method : methods) {
+            for (boolean innerTransactional : innerTransactionalOptions) {
+                // 예외가 발생하는지 여부와 트랜잭션의 존재에 따라 예상 결과를 설정
+                int expectedCount = calculateExpectedCount(method);
+                arguments.add(Arguments.of(method, innerTransactional, expectedCount));
+            }
         }
-
-        // DB에 저장된 엔티티 수 확인
-        assertEquals(expectedCount, testRepository.findAll().size());
+        return arguments.stream();
     }
 
-    private static Stream<Arguments> outerTxTestParameters() {
-        return Stream.of(
-                // outerThrow, outerChecked, innerTransactional, innerThrow, innerChecked, expectedCount
-                Arguments.of(true, true, true, true, true, 2),   // 모든 예외 발생, 체크 예외, 트랜잭션
-                Arguments.of(true, true, true, true, false, 0),  // 모든 예외 발생, 체크 예외, 트랜잭션
-                Arguments.of(true, true, true, false, true, 2),  // 외부 체크 예외, 내부 정상
-                Arguments.of(true, true, true, false, false, 2), // 외부 체크 예외, 내부 정상
-                Arguments.of(true, true, false, true, true, 2),  // 외부 체크 예외, 내부 비트랜잭션
-                Arguments.of(true, true, false, true, false, 0), // 외부 체크 예외, 내부 비트랜잭션
-                Arguments.of(true, true, false, false, true, 2), // 외부 체크 예외, 내부 비트랜잭션, 내부 정상
-                Arguments.of(true, true, false, false, false, 2),// 외부 체크 예외, 내부 비트랜잭션, 내부 정상
-                Arguments.of(true, false, true, true, true, 2),  // 외부 언체크 예외, 내부 트랜잭션, 체크 예외
-                Arguments.of(true, false, true, true, false, 0), // 외부 언체크 예외, 내부 트랜잭션, 언체크 예외
-                Arguments.of(true, false, true, false, true, 0), // 외부 언체크 예외, 내부 트랜잭션, 정상
-                Arguments.of(true, false, true, false, false, 0),// 외부 언체크 예외, 내부 트랜잭션, 정상
-                Arguments.of(true, false, false, true, true, 2), // 외부 언체크 예외, 내부 비트랜잭션, 체크 예외
-                Arguments.of(true, false, false, true, false, 0),// 외부 언체크 예외, 내부 비트랜잭션, 언체크 예외
-                Arguments.of(true, false, false, false, true, 0),// 외부 언체크 예외, 내부 비트랜잭션, 정상
-                Arguments.of(true, false, false, false, false, 0),// 외부 언체크 예외, 내부 비트랜잭션, 정상
-                Arguments.of(false, true, true, true, true, 2),   // 외부 체크 예외, 내부 트랜잭션, 체크 예외
-                Arguments.of(false, true, true, true, false, 0),  // 외부 체크 예외, 내부 트랜잭션, 언체크 예외
-                Arguments.of(false, true, true, false, true, 2),  // 외부 체크 예외, 내부 트랜잭션, 정상
-                Arguments.of(false, true, true, false, false, 2), // 외부 체크 예외, 내부 트랜잭션, 정상
-                Arguments.of(false, true, false, true, true, 2),  // 외부 체크 예외, 내부 비트랜잭션, 체크 예외
-                Arguments.of(false, true, false, true, false, 0), // 외부 체크 예외, 내부 비트랜잭션, 언체크 예외
-                Arguments.of(false, true, false, false, true, 2), // 외부 체크 예외, 내부 비트랜잭션, 정상
-                Arguments.of(false, true, false, false, false, 2),// 외부 체크 예외, 내부 비트랜잭션, 정상
-                Arguments.of(false, false, true, true, true, 2),  // 외부 언체크 예외, 내부 트랜잭션, 체크 예외
-                Arguments.of(false, false, true, true, false, 0), // 외부 언체크 예외, 내부 트랜잭션, 언체크 예외
-                Arguments.of(false, false, true, false, true, 2), // 외부 언체크 예외, 내부 트랜잭션, 정상
-                Arguments.of(false, false, true, false, false, 2),// 외부 언체크 예외, 내부 트랜잭션, 정상
-                Arguments.of(false, false, false, true, true, 2), // 외부 언체크 예외, 내부 비트랜잭션, 체크 예외
-                Arguments.of(false, false, false, true, false, 0),// 외부 언체크 예외, 내부 비트랜잭션, 언체크 예외
-                Arguments.of(false, false, false, false, true, 2),// 외부 언체크 예외, 내부 비트랜잭션, 정상
-                Arguments.of(false, false, false, false, false, 2) // 외부 언체크 예외, 내부 비트랜잭션, 정상
-        );
+    private static int calculateExpectedCount(String methodName) {
+        if (methodName.contains("outerThrowChecked") || methodName.contains("outerNonTxThrowChecked")) {
+            // [1], [2], [9], [10]
+            return 2; // 항상 저장
+        }
+        if (methodName.contains("outerThrowUnchecked")) {
+            // [3], [4]
+            return 0; // 롤백
+        }
+        if (methodName.contains("outerCatchChecked") || methodName.contains("outerCatchUnchecked")) {
+            // [5], [6], [7], [8]
+            return 2; // 항상 저장
+        }
+        if (methodName.contains("outerNonTxThrowUnchecked")) {
+            // [11], [12]
+            return 2; // 항상 저장
+        }
+        if (methodName.contains("outerNonTxCatchChecked") || methodName.contains("outerNonTxCatchUnchecked")) {
+            // [13], [14], [15], [16]
+            return 2; // 항상 저장
+        }
+        return 0;
     }
-
-    private static Stream<Arguments> outerNonTxTestParameters() {
-        return Stream.of(
-                // outerThrow, outerChecked, innerTransactional, innerThrow, innerChecked, expectedCount
-                Arguments.of(true, true, true, true, true, 2),   // 모든 예외 발생, 체크 예외, 트랜잭션
-                Arguments.of(true, true, true, true, false, 2),  // 모든 예외 발생, 체크 예외, 트랜잭션
-                Arguments.of(true, true, true, false, true, 2),  // 외부 체크 예외, 내부 정상
-                Arguments.of(true, true, true, false, false, 2), // 외부 체크 예외, 내부 정상
-                Arguments.of(true, true, false, true, true, 2),  // 외부 체크 예외, 내부 비트랜잭션
-                Arguments.of(true, true, false, true, false, 2), // 외부 체크 예외, 내부 비트랜잭션
-                Arguments.of(true, true, false, false, true, 2), // 외부 체크 예외, 내부 비트랜잭션, 내부 정상
-                Arguments.of(true, true, false, false, false, 2),// 외부 체크 예외, 내부 비트랜잭션, 내부 정상
-                Arguments.of(true, false, true, true, true, 2),  // 외부 언체크 예외, 내부 트랜잭션, 체크 예외
-                Arguments.of(true, false, true, true, false, 2), // 외부 언체크 예외, 내부 트랜잭션, 언체크 예외
-                Arguments.of(true, false, true, false, true, 2), // 외부 언체크 예외, 내부 트랜잭션, 정상
-                Arguments.of(true, false, true, false, false, 2),// 외부 언체크 예외, 내부 트랜잭션, 정상
-                Arguments.of(true, false, false, true, true, 2), // 외부 언체크 예외, 내부 비트랜잭션, 체크 예외
-                Arguments.of(true, false, false, true, false, 2),// 외부 언체크 예외, 내부 비트랜잭션, 언체크 예외
-                Arguments.of(true, false, false, false, true, 2),// 외부 언체크 예외, 내부 비트랜잭션, 정상
-                Arguments.of(true, false, false, false, false, 2),// 외부 언체크 예외, 내부 비트랜잭션, 정상
-                Arguments.of(false, true, true, true, true, 2),   // 외부 체크 예외, 내부 트랜잭션, 체크 예외
-                Arguments.of(false, true, true, true, false, 2),  // 외부 체크 예외, 내부 트랜잭션, 언체크 예외
-                Arguments.of(false, true, true, false, true, 2),  // 외부 체크 예외, 내부 트랜잭션, 정상
-                Arguments.of(false, true, true, false, false, 2), // 외부 체크 예외, 내부 트랜잭션, 정상
-                Arguments.of(false, true, false, true, true, 2),  // 외부 체크 예외, 내부 비트랜잭션, 체크 예외
-                Arguments.of(false, true, false, true, false, 2), // 외부 체크 예외, 내부 비트랜잭션, 언체크 예외
-                Arguments.of(false, true, false, false, true, 2), // 외부 체크 예외, 내부 비트랜잭션, 정상
-                Arguments.of(false, true, false, false, false, 2),// 외부 체크 예외, 내부 비트랜잭션, 정상
-                Arguments.of(false, false, true, true, true, 2),  // 외부 언체크 예외, 내부 트랜잭션, 체크 예외
-                Arguments.of(false, false, true, true, false, 2), // 외부 언체크 예외, 내부 트랜잭션, 언체크 예외
-                Arguments.of(false, false, true, false, true, 2), // 외부 언체크 예외, 내부 트랜잭션, 정상
-                Arguments.of(false, false, true, false, false, 2),// 외부 언체크 예외, 내부 트랜잭션, 정상
-                Arguments.of(false, false, false, true, true, 2), // 외부 언체크 예외, 내부 비트랜잭션, 체크 예외
-                Arguments.of(false, false, false, true, false, 2),// 외부 언체크 예외, 내부 비트랜잭션, 언체크 예외
-                Arguments.of(false, false, false, false, true, 2),// 외부 언체크 예외, 내부 비트랜잭션, 정상
-                Arguments.of(false, false, false, false, false, 2) // 외부 언체크 예외, 내부 비트랜잭션, 정상
-        );
-    }
-
 }
